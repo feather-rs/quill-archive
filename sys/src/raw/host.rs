@@ -1,8 +1,10 @@
 use anyhow::Result;
+
+use wasmer::{Array, Instance, Memory, ValueType, WasmPtr};
+
 use std::convert::TryFrom;
 use std::marker::PhantomData;
 use std::ops::Deref;
-use wasmer::{Array, Instance, Memory, ValueType, WasmPtr};
 
 use crate::host_externs::wasm_free_unchecked;
 

@@ -1,7 +1,10 @@
-use crate::raw::WasmFree;
 use anyhow::Result;
-use std::mem::{align_of, size_of};
+
 use wasmer::{Instance, NativeFunc, WasmPtr};
+
+use std::mem::{align_of, size_of};
+
+use crate::raw::WasmFree;
 
 /// Frees a value that has been allocated in WASM that should
 /// be freed by the host.
