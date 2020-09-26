@@ -1,9 +1,12 @@
 # Free
 
-```rs
-fn free(ptr: *const u8, size: u8, align: u8)
+```c
+void free(void*, unsigned int, unsigned int)
 ```
 
-Tells the plugin to free allocated data at `ptr` with `size` and `align`.
+Arguments (in order):
+- The pointer to free
+- Size of the allocation
+- Align of the allocation
 
 **Assume that using an incorrect size and align will cause UB**
