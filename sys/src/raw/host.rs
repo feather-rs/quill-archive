@@ -55,6 +55,25 @@ impl<T: ValueType> Deref for PluginRef<T> {
 
 unsafe impl<T> ValueType for PluginRef<T> where T: ValueType {}
 
+/// Indicates that a value has allocations on a Plugin's heap within it.
+///
+/// This type is used to guarantee memory safety between the host and a plugin.
+///
+/// # Safety
+/// It is required that `free()` is called to prevent memory leaks.
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug)]
+pub struct HasHeapAllocations<T: ValueType>(pub T);
+
+impl<T: ValueType> Deref for HasHeapAllocations<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+unsafe impl<T> ValueType for HasHeapAllocations<T> where T: ValueType {}
+
 /// A trait that indicates that a structure has allocations to WASM memory.
 /// These allocations **MUST** be freed, not doing so would cause memory leaks.
 pub trait WasmFree: ValueType {
@@ -106,7 +125,7 @@ pub struct PluginSlice<T: ValueType> {
 
 unsafe impl<T> ValueType for PluginSlice<T> where T: ValueType {}
 
-impl<T> WasmFree for PluginSlice<T>
+impl<T> WasmFree for HasHeapAllocations<PluginSlice<T>>
 where
     T: ValueType,
 {
@@ -156,7 +175,7 @@ pub struct PluginSystem {
 
 unsafe impl ValueType for PluginSystem {}
 
-impl WasmFree for PluginSystem {
+impl WasmFree for HasHeapAllocations<PluginSystem> {
     fn free(self, instance: &Instance, memory: &Memory) -> Result<()> {
         self.name.free(instance, memory)
     }
@@ -166,9 +185,9 @@ impl WasmFree for PluginSystem {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct PluginRegister {
-    pub name: PluginString,
-    pub version: PluginString,
-    pub systems: PluginSliceAlloc<PluginSystem>,
+    pub name: HasHeapAllocations<PluginString>,
+    pub version: HasHeapAllocations<PluginString>,
+    pub systems: HasHeapAllocations<PluginSliceAlloc<HasHeapAllocations<PluginSystem>>>,
 }
 
 unsafe impl ValueType for PluginRegister {}
