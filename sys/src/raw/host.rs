@@ -6,12 +6,12 @@ use std::convert::TryFrom;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
-use crate::host_externs::wasm_free_unchecked;
+use crate::host_externs::{wasm_free, wasm_free_unchecked};
 
 /// Represents a `Layout`, but this one is safe to send between WASM and the Host.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct AllocationLayout {
+pub struct Layout {
     pub size: u32,
     pub align: u32,
 }
@@ -24,7 +24,7 @@ pub struct AllocationLayout {
 #[derive(Copy, Clone, Debug)]
 pub struct PluginBox<T: ValueType> {
     pub boxed: T,
-    layout: AllocationLayout,
+    layout: Layout,
 }
 
 impl<T: ValueType> Deref for PluginBox<T> {
@@ -72,7 +72,7 @@ pub trait WasmFree: ValueType {
 pub struct PluginString {
     pub ptr: u32,
     pub len: u32,
-    string_layout: AllocationLayout,
+    string_layout: Layout,
 }
 
 impl PluginString {
@@ -90,14 +90,7 @@ unsafe impl ValueType for PluginString {}
 
 impl WasmFree for PluginString {
     fn free(self, instance: &Instance, _: &Memory) -> Result<()> {
-        unsafe {
-            wasm_free_unchecked(
-                instance,
-                WasmPtr::new(self.ptr),
-                self.string_layout.size as u32,
-                self.string_layout.align as u32,
-            )
-        }
+        wasm_free::<Self>(self.string_layout, instance, WasmPtr::new(self.ptr))
     }
 }
 
@@ -107,7 +100,7 @@ impl WasmFree for PluginString {
 pub struct PluginSlice<T: ValueType> {
     pub len: u32,
     pub elements: u32, // *const [T]
-    slice_layout: AllocationLayout,
+    slice_layout: Layout,
     _marker: PhantomData<T>,
 }
 
@@ -118,14 +111,7 @@ where
     T: ValueType,
 {
     fn free(self, instance: &Instance, _: &Memory) -> Result<()> {
-        unsafe {
-            wasm_free_unchecked(
-                instance,
-                WasmPtr::new(self.elements),
-                self.slice_layout.size as u32,
-                self.slice_layout.align as u32,
-            )
-        }
+        wasm_free::<Self>(self.slice_layout, instance, WasmPtr::new(self.elements))
     }
 }
 
@@ -136,7 +122,7 @@ where
 pub struct PluginSliceAlloc<T: ValueType + WasmFree> {
     pub len: u32,
     pub elements: u32, // *const [T]
-    slice_layout: AllocationLayout,
+    slice_layout: Layout,
     _marker: PhantomData<T>,
 }
 
@@ -156,14 +142,7 @@ where
             element.get().free(instance, memory)?;
         }
 
-        unsafe {
-            wasm_free_unchecked(
-                instance,
-                WasmPtr::new(self.elements),
-                self.slice_layout.size as u32,
-                self.slice_layout.align as u32,
-            )
-        }
+        wasm_free::<Self>(self.slice_layout, instance, WasmPtr::new(self.elements))
     }
 }
 
@@ -208,14 +187,12 @@ impl PluginBox<PluginRegister> {
         ptr: WasmPtr<PluginBox<PluginRegister>>,
         instance: &Instance,
     ) -> Result<()> {
-        // Get layout required to store the type
-        let layout = self.layout;
         unsafe {
             wasm_free_unchecked(
                 instance,
                 WasmPtr::new(ptr.offset()),
-                layout.size as u32,
-                layout.align as u32,
+                self.layout.size,
+                self.layout.align,
             )
         }
     }

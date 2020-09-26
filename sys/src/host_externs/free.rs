@@ -2,20 +2,14 @@ use anyhow::Result;
 
 use wasmer::{Instance, NativeFunc, WasmPtr};
 
-use std::mem::{align_of, size_of};
-
-use crate::raw::WasmFree;
+use crate::raw::{Layout, WasmFree};
 
 /// Frees a value that has been allocated in WASM that should
 /// be freed by the host.
 ///
 /// Automatically determines the size and align to free, if you
 /// need manual control over that use `wasm_free_unsafe`.
-pub fn wasm_free<T: WasmFree>(instance: &Instance, ptr: WasmPtr<T>) -> Result<()> {
-    // Get information about the value we're freeing
-    let free_size = size_of::<T>() as u32;
-    let free_align = align_of::<T>() as u32;
-
+pub fn wasm_free<T: WasmFree>(layout: Layout, instance: &Instance, ptr: WasmPtr<T>) -> Result<()> {
     // Get the start of the value as a byte
     let as_u8 = WasmPtr::new(ptr.offset());
 
@@ -23,7 +17,7 @@ pub fn wasm_free<T: WasmFree>(instance: &Instance, ptr: WasmPtr<T>) -> Result<()
     let free_function: NativeFunc<(WasmPtr<u8>, u32, u32)> =
         instance.exports.get_native_function("__quill_free")?;
 
-    free_function.call(as_u8, free_size, free_align)?;
+    free_function.call(as_u8, layout.size, layout.align)?;
 
     Ok(())
 }
