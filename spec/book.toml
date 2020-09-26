@@ -1,0 +1,6 @@
+[book]
+authors = ["Amber Kowalski"]
+language = "en"
+multilingual = false
+src = "src"
+title = "The Quill Specification"
