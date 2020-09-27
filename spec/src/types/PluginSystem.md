@@ -8,3 +8,6 @@ struct PluginSystem {
     struct PluginString* stage;
 };
 ```
+
+
+`stage` should be represented by `SystemStage`.
