@@ -9,10 +9,18 @@
 //!
 //! The main difference between `module` types and `host` types is all pointers
 //! are represented as `u32`. This is because WASM has a 32-bit usize, and using
-//! the normal pointer type `*const T` would cause UB due to the difference in
+//! the normal pointer type `*const T` would most likely cause UB due to the difference in
 //! usize. Additionally, using `u32` prevents the host from accidentally trying
 //! to cast a wasm ptr directly to a reference on the host. Doing so would cause
 //! UB on cast, and a segfault on dereference.
+//!
+//! Additionally, in order to follow Quill's memory ownership model, there are 3 types that indicate ownership.  
+//! 
+//! `PluginBox<T>`: Indicates that the data returned is from a plugin-exported function returning
+//! a pointer to a struct of type `T` allocated on the plugin's heap.  
+//! `HasHeapAllocations<T>`: Indicates that the host owns the data of type `T` and also MUST free any allocations used to construct the type.  
+//! `PluginRef<T>`: Indicates that the host does NOT own the data of type `T`.  
+
 
 #[cfg(not(feature = "host"))]
 mod module;
