@@ -6,6 +6,6 @@ struct PluginSlice {
     uint32_t length;
     T* elements;
     struct Layout layout;
-}
+};
 ```
 

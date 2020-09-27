@@ -6,5 +6,5 @@ Represents a log level for a `log` invocation. When used to call functions in Qu
 enum LogLevel {
     FEATHER_LOG_DEBUG = 1,
     FEATHER_LOG_INFO = 2
-}
+};
 ```

@@ -9,5 +9,5 @@ struct PluginRegister {
     struct PluginString* name;
     struct PluginString* version;
     struct PluginSliceAlloc* systems;
-}
+};
 ```

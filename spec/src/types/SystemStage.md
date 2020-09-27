@@ -9,5 +9,5 @@ enum SystemStage {
     FEATHER_STAGE_HANDLE_EVENTS = 3,
     FEATHER_STAGE_SEND_PACKETS = 4,
     FEATHER_STAGE_CLEAN_UP = 5
-}
+};
 ```

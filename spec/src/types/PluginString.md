@@ -9,5 +9,5 @@ struct PluginString {
     uint8_t* ptr;
     uint32_t length;
     struct Layout layout;
-}
+};
 ```

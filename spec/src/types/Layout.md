@@ -6,5 +6,5 @@ Allows data with allocations to be freed correctly.
 struct Layout {
     uint32_t size;
     uint32_t align;
-}
+};
 ```
