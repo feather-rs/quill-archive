@@ -57,7 +57,7 @@ unsafe impl<T> ValueType for PluginRef<T> where T: ValueType {}
 
 /// Indicates that a value has allocations on a Plugin's heap within it.
 ///
-/// This type is used to guarantee memory safety between the host and a plugin.
+/// This type is used to prevent memory leaks in plugins.
 ///
 /// # Safety
 /// It is required that `free()` is called to prevent memory leaks.
