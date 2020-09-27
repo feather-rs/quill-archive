@@ -4,7 +4,7 @@ Represents a log level for a `log` invocation. When used to call functions in Qu
 
 ```C
 enum LogLevel {
-    Debug = 1,
-    Info = 2
+    FEATHER_LOG_DEBUG = 1,
+    FEATHER_LOG_INFO = 2
 }
 ```
