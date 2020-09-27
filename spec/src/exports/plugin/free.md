@@ -9,4 +9,4 @@ Arguments (in order):
 - Size of the allocation
 - Align of the allocation
 
-**Assume that using an incorrect size and align will cause UB**
+**The `size` and `align` parameters MUST be equal to the `size` and `align` values given to `alloc` when the memory block at `pointer` was allocated.**
