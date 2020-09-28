@@ -1,17 +1,17 @@
-use std::alloc::Layout;
+use std::alloc::Layout as AllocationLayout;
 use std::convert::TryFrom;
 use std::ops::Deref;
 
 /// Represents a `Layout`, but this one is safe to send between WASM and the Host.
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct AllocationLayout {
+pub struct Layout {
     pub size: usize,
     pub align: usize,
 }
 
-impl From<Layout> for AllocationLayout {
-    fn from(from: Layout) -> Self {
+impl From<AllocationLayout> for Layout {
+    fn from(from: AllocationLayout) -> Self {
         Self {
             size: from.size(),
             align: from.align(),
@@ -19,9 +19,9 @@ impl From<Layout> for AllocationLayout {
     }
 }
 
-impl Into<Layout> for AllocationLayout {
-    fn into(self) -> Layout {
-        Layout::from_size_align(self.size, self.align).unwrap()
+impl Into<AllocationLayout> for Layout {
+    fn into(self) -> AllocationLayout {
+        AllocationLayout::from_size_align(self.size, self.align).unwrap()
     }
 }
 
@@ -33,7 +33,7 @@ impl Into<Layout> for AllocationLayout {
 #[derive(Copy, Clone, Debug)]
 pub struct PluginBox<T: Clone + Copy> {
     pub boxed: T,
-    pub layout: AllocationLayout,
+    pub layout: Layout,
 }
 
 /// Represents a transient reference to memory in a WASM module.
@@ -66,7 +66,7 @@ impl<T: Clone + Copy> Deref for PluginRef<T> {
 pub struct PluginString {
     ptr: *const u8,
     len: usize,
-    slice_layout: AllocationLayout,
+    slice_layout: Layout,
 }
 
 impl PluginString {
@@ -78,7 +78,11 @@ impl PluginString {
         PluginRef(Self {
             ptr: string.as_ptr(),
             len: string.len(),
-            slice_layout: Layout::new::<u8>().repeat(string.len()).unwrap().0.into(),
+            slice_layout: AllocationLayout::new::<u8>()
+                .repeat(string.len())
+                .unwrap()
+                .0
+                .into(),
         })
     }
 }
@@ -89,7 +93,7 @@ impl From<String> for PluginString {
 
         PluginString {
             len: as_str_boxed.len(),
-            slice_layout: Layout::new::<u8>()
+            slice_layout: AllocationLayout::new::<u8>()
                 .repeat(as_str_boxed.len())
                 .unwrap()
                 .0
@@ -105,7 +109,11 @@ impl From<&str> for PluginString {
 
         PluginString {
             len: as_str_boxed.len(),
-            slice_layout: Layout::new::<u8>().repeat(str.len()).unwrap().0.into(),
+            slice_layout: AllocationLayout::new::<u8>()
+                .repeat(str.len())
+                .unwrap()
+                .0
+                .into(),
             ptr: Box::into_raw(as_str_boxed) as *const u8,
         }
     }
@@ -117,7 +125,7 @@ impl From<&str> for PluginString {
 pub struct PluginSlice<T: Copy + Clone> {
     len: usize,
     elements: *const [T],
-    slice_layout: AllocationLayout,
+    slice_layout: Layout,
 }
 
 impl<T> From<&[T]> for PluginSlice<T>
@@ -129,7 +137,11 @@ where
         PluginSlice {
             len: as_box.len(),
             elements: Box::into_raw(as_box),
-            slice_layout: Layout::new::<T>().repeat(from.len()).unwrap().0.into(),
+            slice_layout: AllocationLayout::new::<T>()
+                .repeat(from.len())
+                .unwrap()
+                .0
+                .into(),
         }
     }
 }
@@ -141,7 +153,7 @@ where
 pub struct PluginSliceAlloc<T: Copy + Clone> {
     len: usize,
     elements: *const T,
-    slice_layout: AllocationLayout,
+    slice_layout: Layout,
 }
 
 impl<T> From<&[T]> for PluginSliceAlloc<T>
@@ -152,7 +164,11 @@ where
         let as_box: Box<[T]> = from.into();
         PluginSliceAlloc {
             len: as_box.len(),
-            slice_layout: Layout::new::<T>().repeat(from.len()).unwrap().0.into(),
+            slice_layout: AllocationLayout::new::<T>()
+                .repeat(from.len())
+                .unwrap()
+                .0
+                .into(),
             elements: Box::into_raw(as_box) as *const T,
         }
     }
@@ -194,7 +210,7 @@ impl Into<*const PluginBox<PluginRegister>> for PluginRegister {
     fn into(self) -> *const PluginBox<PluginRegister> {
         let boxed_self = Box::new(PluginBox {
             boxed: self,
-            layout: Layout::new::<PluginBox<PluginRegister>>().into(),
+            layout: AllocationLayout::new::<PluginBox<PluginRegister>>().into(),
         });
 
         Box::into_raw(boxed_self)
